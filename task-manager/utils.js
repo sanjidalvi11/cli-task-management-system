@@ -1,4 +1,5 @@
-module.exports={
+// Exporting all utility functions
+module.exports = {
   menu,
   input,
   ReadAndconvertToJs,
@@ -7,37 +8,41 @@ module.exports={
   isValidDate,
   isDuplicate,
   generateId
-}
-const fs = require('fs');
-
-function menu(){
-   console.log(`========= TASK MANAGER =========
-
-1. Add Task
-
-2. View Tasks
-
-3. Search Task
-
-4. Update Task Status
-
-5. Delete Task
-
-6. Exit
-
-================================`)
 };
 
-//input funtion
+// File system module for reading/writing files
+const fs = require('fs');
+
+// =========================
+// SHOW MENU
+// =========================
+function menu() {
+  console.log(`========= TASK MANAGER =========
+
+1. Add Task
+2. View Tasks
+3. Search Task
+4. Update Task Status
+5. Delete Task
+6. Exit
+
+================================`);
+}
+
+
+// =========================
+// INPUT FUNCTION (CLI PROMPT)
+// =========================
 const readline = require("node:readline");
-function  input(message) {
+
+function input(message) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
+
   return new Promise((resolve) => {
     rl.question(`${message}`, (answer) => {
-      
       resolve(answer);
       rl.close();
     });
@@ -45,23 +50,24 @@ function  input(message) {
 }
 
 
-
-//Read and conver to json file
-
+// =========================
+// READ JSON FILE → JS OBJECT
+// =========================
 function ReadAndconvertToJs(filePath) {
-  const fs = require('fs');
-
   try {
+    // If file does not exist, return empty array
     if (!fs.existsSync(filePath)) {
       return [];
     }
 
     const data = fs.readFileSync(filePath, 'utf-8');
 
+    // If file is empty, return empty array
     if (data.trim() === "") {
       return [];
     }
 
+    // Convert JSON string to JavaScript array
     return JSON.parse(data);
 
   } catch (err) {
@@ -69,23 +75,28 @@ function ReadAndconvertToJs(filePath) {
     return [];
   }
 }
-  
-//write json
-function writeJsonTex(filePath,data){
-       fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-};
 
-//  Priority Validation
 
+// =========================
+// WRITE DATA TO JSON FILE
+// =========================
+function writeJsonTex(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+}
+
+
+// =========================
+// PRIORITY VALIDATION
+// =========================
 function isValidPriority(priority) {
   const valid = ["low", "medium", "high"];
-
   return valid.includes(priority.toLowerCase());
 }
 
-//  Date Validation
-//    Format: YYYY-MM-DD
 
+// =========================
+// DATE VALIDATION (YYYY-MM-DD)
+// =========================
 function isValidDate(date) {
   const regex = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -95,9 +106,11 @@ function isValidDate(date) {
   return d instanceof Date && !isNaN(d);
 }
 
-  //   Duplicate Check
-  //  Same Title + Same Due Date
 
+// =========================
+// DUPLICATE TASK CHECK
+// Same title + same due date
+// =========================
 function isDuplicate(tasks, title, dueDate) {
   return tasks.some(
     task =>
@@ -106,10 +119,14 @@ function isDuplicate(tasks, title, dueDate) {
   );
 }
 
+
+// =========================
+// AUTO ID GENERATOR
+// =========================
 function generateId(tasks) {
   if (!tasks.length) return 100;
 
   const ids = tasks.map(t => Number(t.id));
-  
+
   return Math.max(...ids) + 1;
 }

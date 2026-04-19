@@ -1,59 +1,70 @@
-module.exports={
-    addTask,
-    showTasks,
-    searchTask,
-    updateTaskStatus,
-    deleteTask
-}
+// Exporting all task-related functions
+module.exports = {
+  addTask,
+  showTasks,
+  searchTask,
+  updateTaskStatus,
+  deleteTask
+};
+
+// Importing utility functions for file handling and validation
 const {
-     input,
-     writeJsonTex,
-     ReadAndconvertToJs,
-     generateId, 
-     isValidPriority,
-     isValidDate, 
-     isDuplicate
-    }=require("./utils")
-const {addtasks}=require("./filehandelr");
+  input,
+  writeJsonTex,
+  ReadAndconvertToJs,
+  generateId,
+  isValidPriority,
+  isValidDate,
+  isDuplicate
+} = require("./utils");
+
+const { addtasks } = require("./filehandelr");
 
 
-//add tasks
+// =========================
+// ADD TASK FUNCTION
+// =========================
+async function addTask(filePath) {
+  // Load existing tasks from file
+  const tasks = ReadAndconvertToJs(filePath);
 
-async function addTask(filePath){
-     const tasks = ReadAndconvertToJs(filePath); // 👈 আগের data load
+  // Take user input
+  const title = await input("Enter Title: ");
+  const description = await input("Enter Description: ");
+  const priority = await input("Enter Priority (Low/Medium/High): ");
+  const dueDate = await input("Enter Due Date (YYYY-MM-DD): ");
 
-      const title = await input("Enter Title: ");
-      const description = await input("Enter Description: ");
-      const priority = await input("Enter Priority (Low/Medium/High): ");
-      const dueDate = await input("Enter Due Date (YYYY-MM-DD): ");
-      // validation
-     if (!title.trim()) return console.log("Title cannot be empty");
-     if (!isValidPriority(priority)) return console.log("Invalid priority");
-     if (!isValidDate(dueDate)) return console.log("Invalid date");
-     // duplicate check
-    if (isDuplicate(tasks, title, dueDate)) {
-        console.log("============================")
-       return console.log("Duplicate task found!");
-       console.log("==============================")
-    }
+  // Input validation
+  if (!title.trim()) return console.log("Title cannot be empty");
+  if (!isValidPriority(priority)) return console.log("Invalid priority");
+  if (!isValidDate(dueDate)) return console.log("Invalid date");
 
-    // 🔥 AUTO ID GENERATE HERE
+  // Check duplicate task
+  if (isDuplicate(tasks, title, dueDate)) {
+    console.log("============================");
+    console.log("Duplicate task found!");
+    console.log("============================");
+    return;
+  }
+
+  // Generate unique ID automatically
   const id = generateId(tasks);
-  
-               addtasks( 
-                       filePath,  
-                        id,
-                        title,
-                        description,
-                        priority,
-                        dueDate
-                        );
 
- }
+  // Save task using file handler
+  addtasks(
+    filePath,
+    id,
+    title,
+    description,
+    priority,
+    dueDate
+  );
+}
 
 
-// show tasks//
-
+// =========================
+// GROUP TASKS BY PRIORITY
+// =========================
 function groupTasks(tasks) {
   return {
     High: tasks.filter(t => t.priority === "High"),
@@ -62,6 +73,10 @@ function groupTasks(tasks) {
   };
 }
 
+
+// =========================
+// SHOW ALL TASKS
+// =========================
 async function showTasks(filePath) {
   const tasks = ReadAndconvertToJs(filePath);
 
@@ -71,9 +86,9 @@ async function showTasks(filePath) {
   }
 
   const grouped = groupTasks(tasks);
-
   let count = 1;
 
+  // Display tasks based on priority order
   for (let priority of ["High", "Medium", "Low"]) {
     if (grouped[priority].length > 0) {
       console.log(`\n=== ${priority.toUpperCase()} PRIORITY ===`);
@@ -82,16 +97,20 @@ async function showTasks(filePath) {
         No: count++,
         ID: task.id,
         Task: task.title,
-        description: task.description,
+        Description: task.description,
         Due: task.dueDate,
-        status:task.status
+        Status: task.status
       }));
 
       console.table(tableData);
-    } 
+    }
   }
 }
-//  Search Task
+
+
+// =========================
+// SEARCH TASKS
+// =========================
 function searchTask(filePath, query) {
   const tasks = ReadAndconvertToJs(filePath);
 
@@ -102,6 +121,7 @@ function searchTask(filePath, query) {
 
   const q = query.toLowerCase();
 
+  // Search by title, status, or priority
   const results = tasks.filter(task =>
     task.title.toLowerCase().includes(q) ||
     task.status.toLowerCase() === q ||
@@ -109,9 +129,9 @@ function searchTask(filePath, query) {
   );
 
   if (!results.length) {
-    console.log("=========================")
+    console.log("=========================");
     console.log("No matching tasks found!");
-    console.log("===========================")
+    console.log("=========================");
     return;
   }
 
@@ -131,60 +151,69 @@ function searchTask(filePath, query) {
 }
 
 
-
-//  Update Task Status
+// =========================
+// UPDATE TASK STATUS
+// =========================
 function updateTaskStatus(filePath, id, newStatus) {
   const tasks = ReadAndconvertToJs(filePath);
 
   const validStatus = ["pending", "in progress", "completed"];
 
+  // Validate status input
   if (!validStatus.includes(newStatus.toLowerCase())) {
-    console.log("=====================")
+    console.log("=====================");
     console.log("Invalid status!");
-    console.log("=====================")
+    console.log("=====================");
     return;
   }
 
+  // Find task by ID
   const task = tasks.find(t => t.id == id);
 
   if (!task) {
-    console.log("=====================")
+    console.log("=====================");
     console.log("Task not found!");
-    console.log("=====================")
+    console.log("=====================");
     return;
   }
 
-  // format status (Nice output)
+  // Format status properly (capitalize first letter)
   task.status =
     newStatus.charAt(0).toUpperCase() +
     newStatus.slice(1).toLowerCase();
 
-  writeJsonTex(filePath,tasks) // 🔥 save full array
- console.log("============<<<Task-updated>>>=============");
+  // Save updated tasks
+  writeJsonTex(filePath, tasks);
+
+  console.log("============<<<Task Updated>>>=============");
   console.log("Task status updated successfully!");
-   console.log("============<<<Task-Updated>>>=============");
+  console.log("============<<<Task Updated>>>=============");
 }
 
-// delete Tasks
 
+// =========================
+// DELETE TASK
+// =========================
 function deleteTask(filePath, id) {
   const tasks = ReadAndconvertToJs(filePath);
 
+  // Find task index
   const index = tasks.findIndex(t => t.id == id);
 
   if (index === -1) {
-    console.log("=====================")
+    console.log("=====================");
     console.log("Task not found!");
-    console.log("=====================")
+    console.log("=====================");
     return;
   }
 
-  // remove task
+  // Remove task from array
   tasks.splice(index, 1);
 
-  // save updated array
+  // Save updated tasks
   writeJsonTex(filePath, tasks);
-  console.log("============<<<Task-Delete>>>=============");
+
+  console.log("============<<<Task Deleted>>>=============");
   console.log("Task deleted successfully!");
-  console.log("============<<<Task-Delete>>>=============");
+  console.log("============<<<Task Deleted>>>=============");
 }
